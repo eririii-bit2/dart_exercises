@@ -1,0 +1,50 @@
+name: Sync DartPad Code
+
+on:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1. Install Dart on the runner so we can generate pubspec.yaml and run the code
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Generate Dart Project Structure
+        run: |
+          # 2. Create the bin/ folder
+          mkdir -p bin/
+          
+          # 3. Fetch the Dart code from your Gist directly into bin/dart_exercises.dart
+          gh gist view 3ce52d187b2e9d4161005a5d35b142e8 --raw > bin/dart_exercises.dart
+          
+          # 4. Generate a standard pubspec.yaml if it doesn't already exist
+          if [ ! -f pubspec.yaml ]; then
+            cat << 'EOF' > pubspec.yaml
+          name: dart_exercises
+          description: A sample command-line application.
+          version: 1.0.0
+          environment:
+            sdk: '>=3.0.0 <4.0.0'
+          EOF
+          fi
+
+          # 5. Run the code and save its actual console output into output.txt
+          dart run bin/dart_exercises.dart > output.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          
+          # Stage the newly created files
+          git add bin/dart_exercises.dart pubspec.yaml output.txt
+          
+          # Only commit and push if changes were actually made
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto-generate project structure and run output" && git push)
