@@ -1,0 +1,11 @@
+--- Reciept ---
+Customer: Costumer A
+Regular: true
+-------------------------
+
+Order Quantity: 12
+Discount per Dozen: -4
+-------------------------
+
+Total: 54
+Is the total over 100? false
